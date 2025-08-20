@@ -4,18 +4,21 @@ import Foundation
 import SwiftData
 import SwiftUI
 
+// Replace your existing FlexibleStringList with this:
 struct FlexibleStringList: Codable {
     var items: [String] = []
 
-    init(items: [String]) { self.items = items }
+    init(items: [String] = []) { self.items = items }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.singleValueContainer()
         if let arr = try? c.decode([String].self) {
             items = arr
         } else if let str = try? c.decode(String.self) {
+            // Accept a single string and split on bullets/newlines for flexibility
             let t = str.trimmingCharacters(in: .whitespacesAndNewlines)
-            let split = t.replacingOccurrences(of: "•", with: "\n")
+            let split = t
+                .replacingOccurrences(of: "•", with: "\n")
                 .replacingOccurrences(of: " - ", with: "\n")
                 .components(separatedBy: .newlines)
                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -75,9 +78,6 @@ enum ChatGPTService {
 struct MacroPlannerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
-
-    @Query private var settingsArray: [AppSettings] // ← add this here
-
     let exercise: Exercise
     let palette: ThemePalette
     @State private var targetTotal: Int = 100
@@ -91,8 +91,10 @@ struct MacroPlannerView: View {
     @State private var showingUpgradeAlert = false
 
     private var settings: AppSettings {
-        settingsArray.first ?? {
-            let s = AppSettings(); context.insert(s); return s
+        (try? context.fetch(FetchDescriptor<AppSettings>()).first) ?? {
+            let s = AppSettings()
+            context.insert(s)
+            return s
         }()
     }
 

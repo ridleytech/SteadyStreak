@@ -12,7 +12,7 @@ final class StoreKitManager: ObservableObject {
     @Published var isPurchasing: Bool = false
     @Published var lastError: String? = nil
 
-    static let fullUnlockID = "com.example.repgoal.fullunlock" // TODO: replace
+    static let fullUnlockID = "SSRTFULL" // TODO: replace
 
     private init() {}
 
@@ -30,8 +30,12 @@ final class StoreKitManager: ObservableObject {
         do {
             let products = try await Product.products(for: [Self.fullUnlockID])
             self.product = products.first
+
+            print("Loaded products: \(products.map { $0.displayName })")
         } catch {
             self.lastError = "Failed to load products: \(error.localizedDescription)"
+
+            print("⚠️ Error loading products: \(error)")
         }
     }
 

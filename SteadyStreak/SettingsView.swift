@@ -81,6 +81,9 @@ struct SettingsView: View {
                 Button { settings.themeRaw = opt.rawValue
 
                     print("Theme changed to \(opt.name) (\(opt.rawValue))")
+
+                    try? context.save()
+
                 } label: {
                     HStack(alignment: .center, spacing: 12) {
                         Text(opt.name)

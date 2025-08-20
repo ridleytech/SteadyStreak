@@ -3,6 +3,11 @@
 import Foundation
 import SwiftData
 
+enum ThemeStyle: Int, Codable, CaseIterable, Identifiable {
+    case system = 0, light = 1, dark = 2
+    var id: Int { rawValue }
+}
+
 @Model final class Exercise: Identifiable {
     @Attribute(.unique) var id: UUID
     var name: String
@@ -42,14 +47,17 @@ import SwiftData
     var themeRaw: Int
     init(id: UUID = UUID(), modeRaw: Int = 0, startHour: Int = 7, intervalHours: Int = 3, customHours: [Int] = [7, 10, 13, 16, 19, 22], createdAt: Date = Date(), themeRaw: Int = 0) {
         self.id = id; self.modeRaw = modeRaw; self.startHour = startHour; self.intervalHours = intervalHours; self.customHours = customHours; self.createdAt = createdAt; self.themeRaw = themeRaw
-
-        print("AppSettings initialized with mode: \(modeRaw), startHour: \(startHour), intervalHours: \(intervalHours), customHours: \(customHours), themeRaw: \(themeRaw)")
     }
 
     enum Mode: Int { case interval = 0, custom = 1 }
     var mode: Mode {
         get { Mode(rawValue: modeRaw) ?? .interval }
         set { modeRaw = newValue.rawValue }
+    }
+
+    var theme: ThemeStyle {
+        get { ThemeStyle(rawValue: themeRaw) ?? .system }
+        set { themeRaw = newValue.rawValue }
     }
 }
 
