@@ -174,16 +174,16 @@ struct MacroPlannerView: View {
                     }
                 }
 
-                if let parseError {
-                    Section {
-                        Text(parseError).foregroundStyle(.secondary).font(.footnote)
-                    } header: { AppStyle.header("Parse error") }
-                }
-                if !resultJSON.isEmpty {
-                    Section {
-                        Text(resultJSON).font(.system(.footnote, design: .monospaced)).textSelection(.enabled).lineLimit(10)
-                    } header: { AppStyle.header("Raw (JSON)") }
-                }
+//                if let parseError {
+//                    Section {
+//                        Text(parseError).foregroundStyle(.secondary).font(.footnote)
+//                    } header: { AppStyle.header("Parse error") }
+//                }
+//                if !resultJSON.isEmpty {
+//                    Section {
+//                        Text(resultJSON).font(.system(.footnote, design: .monospaced)).textSelection(.enabled).lineLimit(10)
+//                    } header: { AppStyle.header("Raw (JSON)") }
+//                }
             }
             .listSectionSpacing(20)
             .navigationTitle("Macro Planner")

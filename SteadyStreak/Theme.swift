@@ -10,12 +10,13 @@ struct ThemePalette {
 }
 
 enum ThemeOption: Int, CaseIterable, Identifiable {
-    case system = 0
-    case ocean, sunset, forest, graphite, candy, highContrast
+    case rt = 0
+    case system, ocean, sunset, forest, graphite, candy, highContrast
     case midnight, neonDark, amberDark, aquaDark, crimsonDark
     var id: Int { rawValue }
     var name: String {
         switch self {
+        case .rt: return "Default"
         case .system: return "System"
         case .ocean: return "Ocean"
         case .sunset: return "Sunset"
@@ -30,12 +31,14 @@ enum ThemeOption: Int, CaseIterable, Identifiable {
         case .crimsonDark: return "Crimson (Dark)"
         }
     }
+
     var isDark: Bool {
         switch self {
-        case .midnight, .neonDark, .amberDark, .aquaDark, .crimsonDark: return true
+        case .rt, .midnight, .neonDark, .amberDark, .aquaDark, .crimsonDark: return true
         default: return false
         }
     }
+
     var palette: ThemePalette {
         switch self {
         case .system:
@@ -62,8 +65,11 @@ enum ThemeOption: Int, CaseIterable, Identifiable {
             return ThemePalette(onTint: Color(hex: 0x34D399), offTint: .white.opacity(0.5), text: .white, background: Color(hex: 0x0E1412))
         case .crimsonDark:
             return ThemePalette(onTint: Color(hex: 0xF43F5E), offTint: .white.opacity(0.5), text: .white, background: Color(hex: 0x141014))
+        case .rt:
+            return ThemePalette(onTint: Color(hex: 0x7FBF30), offTint: .white.opacity(0.5), text: .white, background: Color(hex: 0x141014))
         }
     }
+
     var swatch: [Color] { [palette.onTint, palette.offTint, palette.text, palette.background] }
 }
 
@@ -83,6 +89,7 @@ enum ThemeKit {
         let opt = ThemeOption(rawValue: s.themeRaw) ?? .system
         return opt.palette
     }
+
     static func isDark(_ settings: AppSettings?) -> Bool {
         guard let s = settings else { return false }
         return (ThemeOption(rawValue: s.themeRaw) ?? .system).isDark
@@ -101,8 +108,9 @@ struct Themed: ViewModifier {
             .preferredColorScheme(isDark ? .dark : .light)
     }
 }
+
 extension View {
-    func themed(palette: ThemePalette, isDark: Bool) -> some View { self.modifier(Themed(palette: palette, isDark: isDark)) }
+    func themed(palette: ThemePalette, isDark: Bool) -> some View { modifier(Themed(palette: palette, isDark: isDark)) }
 }
 
 struct ThemedProminentButtonStyle: ButtonStyle {
