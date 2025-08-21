@@ -37,7 +37,7 @@ struct ContentView: View {
                             Button("Change Daily Goal") { editingGoal = ex }
                             Button("Log Today's Reps") { showingLogFor = ex }
                             Button("Edit Schedule") { editingExercise = ex }
-                            Button("Plan Macro Goal") { showingMacroFor = ex }
+                            Button("Create SteakPath Goal") { showingMacroFor = ex }
                             Button("View Progress Graph") { showingGraphFor = ex }
                         }
                         .swipeActions(edge: .trailing) { Button("Log") { showingLogFor = ex }.tint(palette.onTint) }

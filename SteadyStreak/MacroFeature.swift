@@ -127,7 +127,7 @@ struct MacroPlannerView: View {
                     } label: {
                         HStack(spacing: 8) {
                             if isLoading { ProgressView() }
-                            Text(isLoading ? "Creating Plan..." : "Create Plan")
+                            Text(isLoading ? "Creating StreakPath..." : "Create StreakPath")
                         }
                     }
                     .buttonStyle(ThemedProminentButtonStyle(palette: palette))
@@ -186,7 +186,7 @@ struct MacroPlannerView: View {
 //                }
             }
             .listSectionSpacing(20)
-            .navigationTitle("Macro Planner")
+            .navigationTitle("StreakPath")
             .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Close") { dismiss() } } }
             .sheet(isPresented: $showingUpgradeSheet) { UpgradeView() }
             .alert("Upgrade required", isPresented: $showingUpgradeAlert) {

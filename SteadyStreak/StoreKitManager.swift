@@ -17,6 +17,7 @@ final class StoreKitManager: ObservableObject {
     private init() {}
 
     func configure() async {
+        print("Configuring StoreKitManager...")
         await self.updateEntitlements()
         await self.loadProducts()
         Task.detached { [weak self] in
