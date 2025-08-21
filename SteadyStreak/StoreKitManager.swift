@@ -6,6 +6,8 @@ import SwiftUI
 
 @MainActor
 final class StoreKitManager: ObservableObject {
+    @Environment(\.modelContext) private var context
+
     static let shared = StoreKitManager()
     @Published var fullUnlocked: Bool = false
     @Published var product: Product? = nil

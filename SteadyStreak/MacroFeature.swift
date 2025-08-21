@@ -234,14 +234,14 @@ struct SavedMacrosView: View {
     var body: some View {
         NavigationStack {
             content
-                .navigationTitle("Saved Plans")
+                .navigationTitle("StreakPaths")
                 .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Close") { dismiss() } } }
         }
     }
 
     @ViewBuilder private var content: some View {
         if goals.isEmpty {
-            ContentUnavailableView("No Saved Plans", systemImage: "bookmark", description: Text("Create a macro plan from an exercise, then save it."))
+            ContentUnavailableView("No StreakPaths", systemImage: "bookmark", description: Text("Create a StreakPath from an exercise, then save it."))
         } else {
             List {
                 ForEach(goals) { g in

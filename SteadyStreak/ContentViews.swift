@@ -90,6 +90,9 @@ struct ContentView: View {
         .themed(palette: palette, isDark: isDark)
         .task { LocalReminderScheduler.rescheduleAll(using: context) }
         .onChange(of: exercises.count) { _ in LocalReminderScheduler.rescheduleAll(using: context) }
+        .onAppear {
+//            settings!.hasFullUnlock = true
+        }
     }
 }
 
