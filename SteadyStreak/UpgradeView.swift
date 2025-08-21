@@ -20,7 +20,7 @@ struct UpgradeView: View {
             VStack(spacing: 16) {
                 Image(systemName: "crown.fill").font(.system(size: 52))
                 Text("Unlock SteadyStreak Pro").font(.title2).bold()
-                Text("Create unlimited goals and Macro Plans.\nSupport development and get more features.")
+                Text("Create unlimited goals and StreakPaths.\nSupport development and get more features.")
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
 

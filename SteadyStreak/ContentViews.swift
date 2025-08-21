@@ -37,7 +37,7 @@ struct ContentView: View {
                             Button("Change Daily Goal") { editingGoal = ex }
                             Button("Log Today's Reps") { showingLogFor = ex }
                             Button("Edit Schedule") { editingExercise = ex }
-                            Button("Create SteakPath Goal") { showingMacroFor = ex }
+                            Button("Create StreakPath") { showingMacroFor = ex }
                             Button("View Progress Graph") { showingGraphFor = ex }
                         }
                         .swipeActions(edge: .trailing) { Button("Log") { showingLogFor = ex }.tint(palette.onTint) }
@@ -85,13 +85,13 @@ struct ContentView: View {
                 .alert("Upgrade required", isPresented: $showingUpgradeAlert) {
                     Button("Not now", role: .cancel) {}
                     Button("Upgrade") { showingUpgradeSheet = true }
-                } message: { Text("Free plan allows up to 3 goals. Upgrade to unlock more and Macro Plans.") }
+                } message: { Text("Free plan allows up to 3 goals. Upgrade to unlock more and StreakPaths.") }
         }
         .themed(palette: palette, isDark: isDark)
         .task { LocalReminderScheduler.rescheduleAll(using: context) }
         .onChange(of: exercises.count) { _ in LocalReminderScheduler.rescheduleAll(using: context) }
         .onAppear {
-//            settings!.hasFullUnlock = true
+            settings!.hasFullUnlock = true
         }
     }
 }

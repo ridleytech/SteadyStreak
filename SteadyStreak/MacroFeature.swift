@@ -58,20 +58,32 @@ struct MacroPlan: Codable {
 
 enum ChatGPTService {
     struct ErrorMsg: LocalizedError { let message: String; var errorDescription: String? { message } }
-    static var apiBase: String = "http://localhost:6000/macro"
+
     static func estimatePlan(exerciseName: String, targetTotal: Int, currentMax: Int) async throws -> String {
-        guard let url = URL(string: apiBase) else { throw ErrorMsg(message: "Invalid API base URL") }
-        var req = URLRequest(url: url)
-        req.httpMethod = "POST"
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let body: [String: Any] = ["exerciseName": exerciseName, "currentMax": currentMax, "targetTotal": targetTotal]
-        req.httpBody = try JSONSerialization.data(withJSONObject: body)
-        let (data, resp) = try await URLSession.shared.data(for: req)
-        guard let http = resp as? HTTPURLResponse, 200 ..< 300 ~= http.statusCode else {
-            let txt = String(data: data, encoding: .utf8) ?? ""
-            throw ErrorMsg(message: "API error \((resp as? HTTPURLResponse)?.statusCode ?? -1): \(txt)")
+        let api = Bundle.main.object(forInfoDictionaryKey: "APIBaseURL") as? String
+
+        if let api {
+            // var apiBase: String = "http://localhost:6000/macro"
+
+            var apiBase = "\(api)/macro"
+
+//            print("apiBase: \(apiBase)")
+
+            guard let url = URL(string: apiBase) else { throw ErrorMsg(message: "Invalid API base URL") }
+            var req = URLRequest(url: url)
+            req.httpMethod = "POST"
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            let body: [String: Any] = ["exerciseName": exerciseName, "currentMax": currentMax, "targetTotal": targetTotal]
+            req.httpBody = try JSONSerialization.data(withJSONObject: body)
+            let (data, resp) = try await URLSession.shared.data(for: req)
+            guard let http = resp as? HTTPURLResponse, 200 ..< 300 ~= http.statusCode else {
+                let txt = String(data: data, encoding: .utf8) ?? ""
+                throw ErrorMsg(message: "API error \((resp as? HTTPURLResponse)?.statusCode ?? -1): \(txt)")
+            }
+            return String(data: data, encoding: .utf8) ?? "{}"
+        } else {
+            return "" // Fallback if API base URL is not set
         }
-        return String(data: data, encoding: .utf8) ?? "{}"
     }
 }
 
@@ -89,6 +101,7 @@ struct MacroPlannerView: View {
     @State private var didSave: Bool = false
     @State private var showingUpgradeSheet = false
     @State private var showingUpgradeAlert = false
+    let api = Bundle.main.object(forInfoDictionaryKey: "APIBaseURL") as? String
 
     private var settings: AppSettings {
         (try? context.fetch(FetchDescriptor<AppSettings>()).first) ?? {
@@ -192,7 +205,10 @@ struct MacroPlannerView: View {
             .alert("Upgrade required", isPresented: $showingUpgradeAlert) {
                 Button("Not now", role: .cancel) {}
                 Button("Upgrade") { showingUpgradeSheet = true }
-            } message: { Text("Upgrade to create Macro Plans.") }
+            } message: { Text("Upgrade to create StreakPaths.") }
+            .alert("Error processing request", isPresented: $showingUpgradeAlert) {
+                Button("OK", role: .cancel) {}
+            } message: { Text("Please check your internet connection.") }
         }
     }
 
@@ -202,10 +218,16 @@ struct MacroPlannerView: View {
         do {
             let jsonString = try await ChatGPTService.estimatePlan(exerciseName: exercise.name, targetTotal: targetTotal, currentMax: exercise.dailyGoal)
             resultJSON = jsonString
+
+            print("Received StreakPath JSON: \(jsonString)")
+
             if let data = jsonString.data(using: .utf8) {
                 do { plan = try JSONDecoder().decode(MacroPlan.self, from: data) } catch { parseError = "Could not decode response as MacroPlan. Showing raw JSON." }
             }
-        } catch { resultJSON = "{\"error\":\"\(error.localizedDescription)\"}" }
+        } catch { resultJSON = "{\"error\":\"\(error.localizedDescription)\"}"
+
+            print("Error estimating plan: \(error.localizedDescription)")
+        }
     }
 
     private func savePlan(_ p: MacroPlan) {
