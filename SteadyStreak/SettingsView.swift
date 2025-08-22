@@ -1,5 +1,10 @@
 //
-//  SettingsView.swift (v14)
+//  SettingsView.swift
+//  SteadyStreak
+//
+//  Created by Randall Ridley on 8/21/25.
+//
+
 import SwiftData
 import SwiftUI
 

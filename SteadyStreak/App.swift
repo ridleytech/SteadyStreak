@@ -1,5 +1,10 @@
 //
-//  App.swift (v13)
+//  App.swift
+//  SteadyStreak
+//
+//  Created by Randall Ridley on 8/21/25.
+//
+
 import BackgroundTasks
 import SwiftData
 import SwiftUI

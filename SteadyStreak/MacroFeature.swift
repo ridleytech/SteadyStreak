@@ -1,5 +1,10 @@
 //
-//  MacroFeature.swift (v14)
+//  StreakPath.swift
+//  SteadyStreak
+//
+//  Created by Randall Ridley on 8/21/25.
+//
+
 import DeviceCheck
 import Foundation
 import Network

@@ -1,7 +1,12 @@
 //
-//  Scheduler.swift (v13)
-import Foundation
+//  Scheduler.swift
+//  SteadyStreak
+//
+//  Created by Randall Ridley on 8/21/25.
+//
+
 import BackgroundTasks
+import Foundation
 import SwiftData
 import UserNotifications
 
@@ -124,7 +129,7 @@ enum LocalReminderScheduler {
             let weekday = cal.component(.weekday, from: base)
             guard exercise.scheduledWeekdays.contains(weekday) else { continue }
             for h in slots {
-                var comps = cal.dateComponents([.year,.month,.day], from: base)
+                var comps = cal.dateComponents([.year, .month, .day], from: base)
                 comps.hour = h; comps.minute = 0; comps.second = 0
                 guard let candidate = cal.date(from: comps), candidate > now else { continue }
                 let remaining: Int = {
@@ -136,7 +141,7 @@ enum LocalReminderScheduler {
                 content.title = exercise.name
                 content.body = "You have \(remaining) reps left for today's goal."
                 content.sound = .default
-                let trigger = UNCalendarNotificationTrigger(dateMatching: cal.dateComponents([.year,.month,.day,.hour,.minute], from: candidate), repeats: false)
+                let trigger = UNCalendarNotificationTrigger(dateMatching: cal.dateComponents([.year, .month, .day, .hour, .minute], from: candidate), repeats: false)
                 let req = UNNotificationRequest(identifier: id(for: exercise, at: candidate), content: content, trigger: trigger)
                 UNUserNotificationCenter.current().add(req)
                 scheduledCount += 1

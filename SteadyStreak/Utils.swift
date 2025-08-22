@@ -1,8 +1,8 @@
 //
 //  Utils.swift
-//  FootballTraining
+//  SteadyStreak
 //
-//  Created by Randall Ridley on 4/26/25.
+//  Created by Randall Ridley on 8/21/25.
 //
 
 import DeviceCheck

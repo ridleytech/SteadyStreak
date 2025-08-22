@@ -1,5 +1,10 @@
 //
-//  Theme.swift (v13)
+//  Theme.swift
+//  SteadyStreak
+//
+//  Created by Randall Ridley on 8/21/25.
+//
+
 import SwiftUI
 
 struct ThemePalette {

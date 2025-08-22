@@ -1,5 +1,10 @@
 //
-//  Styles.swift (v14)
+//  Styles.swift
+//  SteadyStreak
+//
+//  Created by Randall Ridley on 8/21/25.
+//
+
 import SwiftUI
 #if canImport(UIKit)
 import UIKit

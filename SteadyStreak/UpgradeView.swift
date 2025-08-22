@@ -1,5 +1,10 @@
 //
-//  UpgradeView.swift (v17)
+//  UpgradeView.swift
+//  SteadyStreak
+//
+//  Created by Randall Ridley on 8/21/25.
+//
+
 import StoreKit
 import SwiftData
 import SwiftUI

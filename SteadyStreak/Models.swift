@@ -1,5 +1,10 @@
 //
-//  Models.swift (v13)
+//  Models.swift
+//  SteadyStreak
+//
+//  Created by Randall Ridley on 8/21/25.
+//
+
 import Foundation
 import SwiftData
 

@@ -1,5 +1,10 @@
 //
 //  StoreKitManager.swift
+//  SteadyStreak
+//
+//  Created by Randall Ridley on 8/21/25.
+//
+
 import Foundation
 import StoreKit
 import SwiftUI

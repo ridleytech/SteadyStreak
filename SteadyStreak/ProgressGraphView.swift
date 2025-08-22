@@ -1,5 +1,10 @@
 //
-//  ProgressGraphView.swift (v17)
+//  ProgressGraphView.swift
+//  SteadyStreak
+//
+//  Created by Randall Ridley on 8/21/25.
+//
+
 import Charts
 import SwiftData
 import SwiftUI
