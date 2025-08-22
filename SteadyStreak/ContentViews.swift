@@ -18,6 +18,7 @@ struct ContentView: View {
     @State private var showingMacroFor: Exercise? = nil
     @State private var showingSaved = false
     @State private var showingGraphFor: Exercise? = nil
+    @State private var deletingExercise: Exercise? = nil
 
 //    private var settings: AppSettings? { settingsArray.first }
 
@@ -28,6 +29,14 @@ struct ContentView: View {
 
     private var palette: ThemePalette { ThemeKit.palette(settings) }
     private var isDark: Bool { ThemeKit.isDark(settings) }
+
+    private func performDelete(_ ex: Exercise) {
+        withAnimation {
+            context.delete(ex)
+            LocalReminderScheduler.rescheduleAll(using: context)
+            try? context.save()
+        }
+    }
 
     @ViewBuilder
     private var mainContent: some View {
@@ -47,7 +56,17 @@ struct ContentView: View {
                             Button("View Progress Graph") { showingGraphFor = ex }
                         }
                         .swipeActions(edge: .trailing) { Button("Log") { showingLogFor = ex }.tint(palette.onTint) }
-                        .swipeActions(edge: .leading) { Button("Edit") { editingExercise = ex }.tint(.blue) }
+//                        .swipeActions(edge: .leading) { Button("Edit") { editingExercise = ex }.tint(.blue) }
+                        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                            Button("Edit") { editingExercise = ex }.tint(.blue)
+
+                            Button(role: .destructive) {
+                                deletingExercise = ex
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+
                         .listRowBackground(Color.clear)
                 }
                 .onDelete { indexSet in
@@ -93,12 +112,26 @@ struct ContentView: View {
                     Button("Not now", role: .cancel) {}
                     Button("Upgrade") { showingUpgradeSheet = true }
                 } message: { Text("Free plan allows up to 3 goals. Upgrade to unlock more and StreakPaths.") }
+                .alert("Delete Exercise?", isPresented: Binding(
+                    get: { deletingExercise != nil },
+                    set: { if !$0 { deletingExercise = nil } }
+                )) {
+                    Button("Delete", role: .destructive) {
+                        if let ex = deletingExercise {
+                            performDelete(ex)
+                        }
+                        deletingExercise = nil
+                    }
+                    Button("Cancel", role: .cancel) { deletingExercise = nil }
+                } message: {
+                    Text("This will remove \"\(deletingExercise?.name ?? "this exercise")\" and all of its logged reps.")
+                }
         }
         .themed(palette: palette, isDark: isDark)
         .task { LocalReminderScheduler.rescheduleAll(using: context) }
         .onChange(of: exercises.count) { _ in LocalReminderScheduler.rescheduleAll(using: context) }
         .onAppear {
-//            settings!.hasFullUnlock = true
+//            settings.hasFullUnlock = true
         }
     }
 }

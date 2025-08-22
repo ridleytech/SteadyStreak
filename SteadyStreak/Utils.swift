@@ -5,8 +5,10 @@
 //  Created by Randall Ridley on 4/26/25.
 //
 
+import DeviceCheck
 import Foundation
 import SwiftUI
+import UIKit
 
 extension Color {
     init(hex: String) {
@@ -73,4 +75,15 @@ extension UIApplication {
     func endEditing() {
         sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
+}
+
+func logDeviceInfo() {
+    #if targetEnvironment(simulator)
+    print("Running on Simulator")
+    #else
+    print("Running on Device")
+    #endif
+    print("System: \(UIDevice.current.systemName) \(UIDevice.current.systemVersion)")
+    print("Model: \(UIDevice.current.model)")
+    print("AppAttest supported: \(DCAppAttestService.shared.isSupported)")
 }

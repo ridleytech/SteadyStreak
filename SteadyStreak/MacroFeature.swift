@@ -1,6 +1,8 @@
 //
 //  MacroFeature.swift (v14)
+import DeviceCheck
 import Foundation
+import Network
 import SwiftData
 import SwiftUI
 
@@ -153,6 +155,9 @@ struct MacroPlannerView: View {
     @State private var didSave: Bool = false
     @State private var showingUpgradeSheet = false
     @State private var showingUpgradeAlert = false
+    @State private var showingNetConnectionAlert = false
+    @State private var showingAttestAlert = false
+
     let api = Bundle.main.object(forInfoDictionaryKey: "APIBaseURL") as? String
 
     private var settings: AppSettings {
@@ -161,6 +166,46 @@ struct MacroPlannerView: View {
             context.insert(s)
             return s
         }()
+    }
+
+    func hasInternetConnection() -> Bool {
+        let monitor = NWPathMonitor()
+        let queue = DispatchQueue(label: "NetworkMonitor")
+        var status = false
+        let semaphore = DispatchSemaphore(value: 0)
+
+        monitor.pathUpdateHandler = { path in
+            status = (path.status == .satisfied)
+            semaphore.signal()
+            monitor.cancel()
+        }
+        monitor.start(queue: queue)
+
+        _ = semaphore.wait(timeout: .now() + 2) // wait up to 2 seconds
+        return status
+    }
+
+    func createStreakPath() {
+        guard hasInternetConnection() else {
+            print("❌ No internet connection")
+            showingNetConnectionAlert = true
+            return
+        }
+
+        if DCAppAttestService.shared.isSupported {
+            if !settings.hasFullUnlock { showingUpgradeAlert = true } else {
+                Task { await runEstimate() }
+            }
+        } else {
+            print("❌ App Attest not supported")
+
+            showingAttestAlert = true
+            // TODO: remove in production
+            // Call the unprotected endpoint or add a “demo mode” header
+//            return try await ChatGPTService.estimatePlan(
+//                exerciseName: exerciseName, targetTotal: targetTotal, currentMax: currentMax
+//            )
+        }
     }
 
     var body: some View {
@@ -185,9 +230,7 @@ struct MacroPlannerView: View {
                     .padding(.vertical, 6)
 
                     Button {
-                        if !settings.hasFullUnlock { showingUpgradeAlert = true } else {
-                            Task { await runEstimate() }
-                        }
+                        createStreakPath()
 
                     } label: {
                         HStack(spacing: 8) {
@@ -258,9 +301,12 @@ struct MacroPlannerView: View {
                 Button("Not now", role: .cancel) {}
                 Button("Upgrade") { showingUpgradeSheet = true }
             } message: { Text("Upgrade to create StreakPaths.") }
-            .alert("Error processing request", isPresented: $showingUpgradeAlert) {
+            .alert("Error processing request", isPresented: $showingNetConnectionAlert) {
                 Button("OK", role: .cancel) {}
             } message: { Text("Please check your internet connection.") }
+            .alert("Feature not supported on this device", isPresented: $showingAttestAlert) {
+                Button("OK", role: .cancel) {}
+            } message: { Text("Please make sure you are using a physical iOS device with iOS version 14 or greater.") }
         }
     }
 
