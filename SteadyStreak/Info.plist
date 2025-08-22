@@ -2,8 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>APIBaseURL</key>
+	<key>APIBaseURL1</key>
 	<string>https://rjtjg4bnj42tmbcatg5sgsu3bq0wdluz.lambda-url.us-west-2.on.aws</string>
+	<key>APIBaseURL</key>
+	<string>https://rv0am18e5a.execute-api.us-west-2.amazonaws.com/prod</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

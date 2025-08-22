@@ -7,6 +7,7 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Query private var settingsArray: [AppSettings]
+
     private var settings: AppSettings {
         if let s = settingsArray.first { return s }
         let s = AppSettings(); context.insert(s); return s

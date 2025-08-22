@@ -19,7 +19,13 @@ struct ContentView: View {
     @State private var showingSaved = false
     @State private var showingGraphFor: Exercise? = nil
 
-    private var settings: AppSettings? { settingsArray.first }
+//    private var settings: AppSettings? { settingsArray.first }
+
+    private var settings: AppSettings {
+        if let s = settingsArray.first { return s }
+        let s = AppSettings(); context.insert(s); return s
+    }
+
     private var palette: ThemePalette { ThemeKit.palette(settings) }
     private var isDark: Bool { ThemeKit.isDark(settings) }
 
@@ -53,7 +59,8 @@ struct ContentView: View {
     }
 
     private func handleAddExerciseTapped() {
-        if let settings = settings, !settings.hasFullUnlock && exercises.count >= 3 {
+        print("Add Exercise button tapped", settings.hasFullUnlock)
+        if settings.hasFullUnlock == false && exercises.count >= 3 {
             print("Showing upgrade alert")
             showingUpgradeAlert = true
         } else {
@@ -91,7 +98,7 @@ struct ContentView: View {
         .task { LocalReminderScheduler.rescheduleAll(using: context) }
         .onChange(of: exercises.count) { _ in LocalReminderScheduler.rescheduleAll(using: context) }
         .onAppear {
-            settings!.hasFullUnlock = true
+//            settings!.hasFullUnlock = true
         }
     }
 }

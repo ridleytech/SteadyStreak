@@ -85,6 +85,58 @@ enum ChatGPTService {
             return "" // Fallback if API base URL is not set
         }
     }
+
+    @available(iOS 14.0, *)
+    static func estimatePlanProtected(
+        exerciseName: String,
+        targetTotal: Int,
+        currentMax: Int
+    ) async throws -> String {
+        // Same base URL lookup as estimatePlan()
+        guard let api = Bundle.main.object(forInfoDictionaryKey: "APIBaseURL") as? String,
+              let baseURL = URL(string: api)
+        else {
+            throw ErrorMsg(message: "Invalid API base URL")
+        }
+
+        // Configure App Attest client (safe to call repeatedly)
+        var cfg = AppAttestClient.Config(apiBaseURL: baseURL)
+        cfg.noncePath = "/nonce"
+        cfg.registerPath = "/register"
+        AppAttestClient.shared.configure(cfg)
+
+        // Ensure we have a key registered
+        try await AppAttestClient.shared.registerIfNeeded()
+
+        // Build the SAME JSON body as estimatePlan
+        let bodyDict: [String: Any] = [
+            "exerciseName": exerciseName,
+            "currentMax": currentMax,
+            "targetTotal": targetTotal
+        ]
+        let bodyData = try JSONSerialization.data(withJSONObject: bodyDict, options: [])
+
+        // Sign headers for POST /protected with this exact body
+        let headers = try await AppAttestClient.shared.signedHeaders(
+            method: "POST",
+            path: "/protected",
+            body: bodyData
+        )
+
+        // Create the request to .../protected
+        var req = URLRequest(url: baseURL.appendingPathComponent("protected"))
+        req.httpMethod = "POST"
+        req.httpBody = bodyData
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        headers.forEach { k, v in req.setValue(v, forHTTPHeaderField: k) }
+
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse, 200 ..< 300 ~= http.statusCode else {
+            let txt = String(data: data, encoding: .utf8) ?? ""
+            throw ErrorMsg(message: "API error \((resp as? HTTPURLResponse)?.statusCode ?? -1): \(txt)")
+        }
+        return String(data: data, encoding: .utf8) ?? "{}"
+    }
 }
 
 struct MacroPlannerView: View {
@@ -216,7 +268,7 @@ struct MacroPlannerView: View {
         isLoading = true; defer { isLoading = false }
         parseError = nil; didSave = false; plan = nil
         do {
-            let jsonString = try await ChatGPTService.estimatePlan(exerciseName: exercise.name, targetTotal: targetTotal, currentMax: exercise.dailyGoal)
+            let jsonString = try await ChatGPTService.estimatePlanProtected(exerciseName: exercise.name, targetTotal: targetTotal, currentMax: exercise.dailyGoal)
             resultJSON = jsonString
 
             print("Received StreakPath JSON: \(jsonString)")
@@ -309,7 +361,7 @@ struct MacroDetailView: View {
                 if let assumptions = goal.assumptions, !assumptions.isEmpty {
                     Section { ForEach(assumptions, id: \.self) { Text($0) } } header: { AppStyle.header("Assumptions") }
                 }
-                Section { Text(goal.lastResultJSON).font(.system(.footnote, design: .monospaced)) } header: { AppStyle.header("Raw JSON") }
+//                Section { Text(goal.lastResultJSON).font(.system(.footnote, design: .monospaced)) } header: { AppStyle.header("Raw JSON") }
             }
             .navigationTitle(goal.exerciseName)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Close") { dismiss() } } }
