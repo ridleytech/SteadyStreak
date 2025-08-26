@@ -117,6 +117,11 @@ struct ProgressGraphView: View {
                                                 .font(.caption2)
                                                 .padding(.horizontal, 6).padding(.vertical, 4)
                                                 .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 6))
+
+//                                            Text("🎯")
+//                                                .font(.caption2)
+//                                                .padding(.horizontal, 6).padding(.vertical, 4)
+//                                                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 6))
                                         }
 
                                     RuleMark(x: .value("Due", m.completionDate))
@@ -199,7 +204,7 @@ struct ProgressGraphView: View {
                                             let centerX = clampedOriginX + bubbleSize.width / 2
                                             let centerY = clampedOriginY + bubbleSize.height / 2
 
-                                            Text(sel.day.formatted(date: .numeric, time: .omitted))
+                                            Text("\(sel.total) - \(sel.day.formatted(date: .numeric, time: .omitted))")
                                                 .font(.caption2).fontWeight(.semibold)
                                                 .padding(.horizontal, 10).padding(.vertical, 6)
                                                 .frame(width: bubbleSize.width, height: bubbleSize.height, alignment: .leading)
