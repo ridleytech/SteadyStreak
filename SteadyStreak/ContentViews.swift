@@ -10,6 +10,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(\.modelContext) private var context
+    @Environment(\.scenePhase) private var scenePhase // ⬅️ ADDED
     @Query(sort: [SortDescriptor(\Exercise.createdAt, order: .forward)]) private var exercises: [Exercise]
     @Query private var settingsArray: [AppSettings]
 
@@ -24,6 +25,7 @@ struct ContentView: View {
     @State private var showingSaved = false
     @State private var showingGraphFor: Exercise? = nil
     @State private var deletingExercise: Exercise? = nil
+    @State private var dayAnchor = Calendar.current.startOfDay(for: Date()) // ⬅️ ADDED
 
 //    private var settings: AppSettings? { settingsArray.first }
 
@@ -96,6 +98,7 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             mainContent
+                .id(dayAnchor) // ⬅️ ADDED: Rebuild view tree when day flips
                 .navigationTitle("SteadyStreak")
                 .toolbar {
 //                    ToolbarItem(placement: .topBarLeading) { Button { LocalReminderScheduler.rescheduleAll(using: context) } label: { Image(systemName: "bell.badge") } }
@@ -134,9 +137,26 @@ struct ContentView: View {
         }
         .themed(palette: palette, isDark: isDark)
         .task { LocalReminderScheduler.rescheduleAll(using: context) }
-        .onChange(of: exercises.count) { _ in LocalReminderScheduler.rescheduleAll(using: context) }
+        .onChange(of: exercises.count) {
+            _ in LocalReminderScheduler.rescheduleAll(using: context)
+
+//            print("Exercises count changed to \(exercises.count); rescheduled reminders")
+        }
         .onAppear {
 //            settings.hasFullUnlock = true
+        }
+        .onChange(of: scenePhase) { phase in // ⬅️ ADDED: Foreground check
+            if phase == .active {
+//                print("App became active; checking date")
+                let today = Calendar.current.startOfDay(for: Date())
+                if today != dayAnchor {
+                    dayAnchor = today
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
+            // ⬅️ ADDED: Handle midnight rollover while app is open
+            dayAnchor = Calendar.current.startOfDay(for: Date())
         }
     }
 }

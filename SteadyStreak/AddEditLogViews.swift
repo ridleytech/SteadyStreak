@@ -92,7 +92,7 @@ struct GoalEditorView: View {
             Form {
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
-                        Stepper(value: $exercise.dailyGoal, in: 1...10000, step: 5) {
+                        Stepper(value: $exercise.dailyGoal, in: 1...10000, step: 1) {
                             HStack { Text("Reps per day"); Spacer(); Text("\(exercise.dailyGoal)").monospacedDigit().foregroundStyle(.secondary) }
                         }
                         HStack {
@@ -130,7 +130,7 @@ struct EditExerciseView: View {
 
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
-                        Stepper(value: $exercise.dailyGoal, in: 1...10000, step: 5) {
+                        Stepper(value: $exercise.dailyGoal, in: 1...10000, step: 1) {
                             HStack { Text("Reps per day"); Spacer(); Text("\(exercise.dailyGoal)").monospacedDigit().foregroundStyle(.secondary) }
                         }
                         HStack {

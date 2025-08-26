@@ -10,6 +10,7 @@ import Foundation
 import Network
 import SwiftData
 import SwiftUI
+import UIKit
 
 // Replace your existing FlexibleStringList with this:
 struct FlexibleStringList: Codable {
@@ -205,11 +206,6 @@ struct MacroPlannerView: View {
             print("❌ App Attest not supported")
 
             showingAttestAlert = true
-            // TODO: remove in production
-            // Call the unprotected endpoint or add a “demo mode” header
-//            return try await ChatGPTService.estimatePlan(
-//                exerciseName: exerciseName, targetTotal: targetTotal, currentMax: currentMax
-//            )
         }
     }
 
@@ -234,18 +230,28 @@ struct MacroPlannerView: View {
                     }
                     .padding(.vertical, 6)
 
-                    Button {
-                        createStreakPath()
+                    VStack {
+                        Button {
+                            createStreakPath()
 
-                    } label: {
-                        HStack(spacing: 8) {
-                            if isLoading { ProgressView() }
-                            Text(isLoading ? "Creating StreakPath..." : "Create StreakPath")
+                        } label: {
+                            HStack(spacing: 8) {
+                                Text(isLoading ? "Creating StreakPath..." : "Create StreakPath")
+                            }
                         }
+                        .buttonStyle(ThemedProminentButtonStyle(palette: palette))
+                        .padding(.top, 8)
+                        .padding(.bottom, 14)
+                        .disabled(isLoading)
+
+                        ProgressView()
+                            .tint(palette.onTint)
+                            .scaleEffect(1.3)
+                            .padding(.top, 3)
+                            .padding(.bottom, 14)
+                            .opacity(isLoading ? 1 : 0)
                     }
-                    .buttonStyle(ThemedProminentButtonStyle(palette: palette))
-                    .padding(.top, 8)
-                    .padding(.bottom, 14)
+
                 } header: { AppStyle.header("📌 Exercise") }
 
                 if let p = plan {
@@ -318,6 +324,7 @@ struct MacroPlannerView: View {
     private func runEstimate() async {
         isLoading = true; defer { isLoading = false }
         parseError = nil; didSave = false; plan = nil
+
         do {
             let jsonString = try await ChatGPTService.estimatePlanProtected(exerciseName: exercise.name, targetTotal: targetTotal, currentMax: exercise.dailyGoal)
             resultJSON = jsonString
@@ -394,23 +401,23 @@ struct MacroDetailView: View {
             List {
                 Section {
                     if let days = goal.estimatedDays {
-                        HStack { Text("Estimated days"); Spacer(); Text("\(days)") }
+                        HStack { Text("📅 Estimated days"); Spacer(); Text("\(days)") }
                     }
                     if let date = goal.completionDate {
-                        HStack { Text("Completion date"); Spacer(); Text(date) }
+                        HStack { Text("🗓️ Completion date"); Spacer(); Text(date) }
                     }
                     if let rec = goal.dailyRecommendation {
                         VStack(alignment: .leading) {
-                            Text("Daily recommendation")
+                            Text("✅ Daily recommendation")
                             Text(rec).foregroundStyle(.secondary)
                         }
                     }
-                } header: { AppStyle.header("Summary") }
+                } header: { AppStyle.header("🧭 Summary") }
                 if let weekly = goal.weeklyNotes, !weekly.isEmpty {
-                    Section { ForEach(weekly, id: \.self) { Text($0) } } header: { AppStyle.header("Weekly notes") }
+                    Section { ForEach(weekly, id: \.self) { Text($0) } } header: { AppStyle.header("📒 Weekly notes") }
                 }
                 if let assumptions = goal.assumptions, !assumptions.isEmpty {
-                    Section { ForEach(assumptions, id: \.self) { Text($0) } } header: { AppStyle.header("Assumptions") }
+                    Section { ForEach(assumptions, id: \.self) { Text($0) } } header: { AppStyle.header("⚙️ Assumptions") }
                 }
 //                Section { Text(goal.lastResultJSON).font(.system(.footnote, design: .monospaced)) } header: { AppStyle.header("Raw JSON") }
             }

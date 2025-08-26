@@ -19,7 +19,7 @@ final class StoreKitManager: ObservableObject {
     @Published var isPurchasing: Bool = false
     @Published var lastError: String? = nil
 
-    static let fullUnlockID = "SSRTFULL" // TODO: replace
+    static let fullUnlockID = "com.ridleytech.SteadyStreak.FullAccess"
 
     private init() {}
 
