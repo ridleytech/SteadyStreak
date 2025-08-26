@@ -87,3 +87,28 @@ func logDeviceInfo() {
     print("Model: \(UIDevice.current.model)")
     print("AppAttest supported: \(DCAppAttestService.shared.isSupported)")
 }
+
+func parseDate(_ s: String?) -> Date? {
+    guard let raw = s?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { return nil }
+
+    // 1) ISO-8601 first (handles "2025-08-26", "2025-08-26T00:00:00Z", etc.)
+    let iso = ISO8601DateFormatter()
+    iso.formatOptions = [.withFullDate, .withInternetDateTime, .withDashSeparatorInDate, .withColonSeparatorInTime]
+    if let d = iso.date(from: raw) { return d }
+
+    // 2) Common explicit formats
+    let fmts = [
+        "yyyy-MM-dd",
+        "MM/dd/yyyy",
+        "yyyy-MM-dd'T'HH:mm:ssXXXXX",
+        "yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX"
+    ]
+    let df = DateFormatter()
+    df.locale = Locale(identifier: "en_US_POSIX")
+    df.timeZone = .current
+    for f in fmts {
+        df.dateFormat = f
+        if let d = df.date(from: raw) { return d }
+    }
+    return nil
+}
