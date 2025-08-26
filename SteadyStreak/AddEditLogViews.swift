@@ -27,12 +27,14 @@ struct AddExerciseView: View {
 
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
-                        Stepper(value: $goal, in: 1...10000, step: 5) {
+                        Stepper(value: $goal, in: 1...10000, step: 1) {
                             HStack { Text("Reps per day"); Spacer(); Text("\(goal)").monospacedDigit().foregroundStyle(.secondary) }
                         }
                         HStack {
                             Button("+5") { goal = min(10000, goal + 5) }.buttonStyle(BorderedButtonStyle())
                             Button("+10") { goal = min(10000, goal + 10) }.buttonStyle(BorderedButtonStyle())
+                            Button("-5") { goal = min(10000, goal - 5 > 0 ? goal - 5 : 1) }.buttonStyle(BorderedButtonStyle())
+                            Button("-10") { goal = min(10000, goal - 10 - 10 > 0 ? goal - 10 : 1) }.buttonStyle(BorderedButtonStyle())
                         }
                     }
                 } header: { AppStyle.header("Goal (per active day)") }
@@ -98,6 +100,8 @@ struct GoalEditorView: View {
                         HStack {
                             Button("+5") { exercise.dailyGoal = min(10000, exercise.dailyGoal + 5) }.buttonStyle(BorderedButtonStyle())
                             Button("+10") { exercise.dailyGoal = min(10000, exercise.dailyGoal + 10) }.buttonStyle(BorderedButtonStyle())
+                            Button("-5") { exercise.dailyGoal = min(10000, exercise.dailyGoal - 5 > 0 ? exercise.dailyGoal - 5 : 1) }.buttonStyle(BorderedButtonStyle())
+                            Button("-10") { exercise.dailyGoal = min(10000, exercise.dailyGoal - 10 > 0 ? exercise.dailyGoal - 10 : 1) }.buttonStyle(BorderedButtonStyle())
                         }
                     }
                     Text("Changing the goal updates your progress bar immediately.")
@@ -136,6 +140,8 @@ struct EditExerciseView: View {
                         HStack {
                             Button("+5") { exercise.dailyGoal = min(10000, exercise.dailyGoal + 5) }.buttonStyle(BorderedButtonStyle())
                             Button("+10") { exercise.dailyGoal = min(10000, exercise.dailyGoal + 10) }.buttonStyle(BorderedButtonStyle())
+                            Button("-5") { exercise.dailyGoal = min(10000, exercise.dailyGoal - 5 > 0 ? exercise.dailyGoal - 5 : 1) }.buttonStyle(BorderedButtonStyle())
+                            Button("-10") { exercise.dailyGoal = min(10000, exercise.dailyGoal - 10 > 0 ? exercise.dailyGoal - 10 : 1) }.buttonStyle(BorderedButtonStyle())
                         }
                     }
                 } header: { AppStyle.header("Goal (per active day)") }
@@ -205,6 +211,8 @@ struct LogRepsView: View {
                     HStack {
                         Button("+5") { currentTotal = min(100000, currentTotal + 5) }.buttonStyle(BorderedButtonStyle())
                         Button("+10") { currentTotal = min(100000, currentTotal + 10) }.buttonStyle(BorderedButtonStyle())
+                        Button("-5") { currentTotal = min(100000, currentTotal - 5 > 0 ? currentTotal - 5 : 1) }.buttonStyle(BorderedButtonStyle())
+                        Button("-10") { currentTotal = min(100000, currentTotal - 10 > 0 ? currentTotal - 10 : 1) }.buttonStyle(BorderedButtonStyle())
                         Spacer()
                         Button("Reset") { currentTotal = 0 }.buttonStyle(BorderedButtonStyle())
                     }

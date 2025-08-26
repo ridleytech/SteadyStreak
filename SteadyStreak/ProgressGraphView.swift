@@ -48,7 +48,7 @@ struct ProgressGraphView: View {
                 // Segmented control: only if we have a valid macro goal
                 if macro != nil {
                     Picker("", selection: $tab) {
-                        Text("Progress").tag(ChartTab.progress)
+                        Text("Daily Progress").tag(ChartTab.progress)
                         Text("StreakPath").tag(ChartTab.streakPath)
                     }
                     .pickerStyle(.segmented)
@@ -110,7 +110,7 @@ struct ProgressGraphView: View {
                                 // StreakPath overlays
                                 if let m = macro, tab == .streakPath {
                                     RuleMark(y: .value("Target", m.targetTotal))
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(palette.onTint)
                                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
                                         .annotation(position: .topTrailing) {
                                             Text("Target: \(m.targetTotal)")
