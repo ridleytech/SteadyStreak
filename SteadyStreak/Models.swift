@@ -71,7 +71,7 @@ enum ThemeStyle: Int, Codable, CaseIterable, Identifiable {
     var createdAt: Date
     var exerciseID: UUID
     var exerciseName: String
-    var targetTotal: Int
+    var targetTotal: Int?
     var currentMax: Int
     var lastResultJSON: String
     var estimatedDays: Int?

@@ -400,6 +400,9 @@ struct MacroDetailView: View {
         NavigationStack {
             List {
                 Section {
+                    if let targetTotal = goal.targetTotal {
+                        HStack { Text("🎯 Target total"); Spacer(); Text("\(targetTotal)") }
+                    }
                     if let days = goal.estimatedDays {
                         HStack { Text("📅 Estimated days"); Spacer(); Text("\(days)") }
                     }
