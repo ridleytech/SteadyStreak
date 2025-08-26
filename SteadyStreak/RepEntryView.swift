@@ -12,6 +12,7 @@ import SwiftUI
 struct AddRepEntryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
+    let palette: ThemePalette
 
     // Load saved exercises
     @Query(sort: [SortDescriptor(\Exercise.createdAt, order: .forward)])
@@ -80,6 +81,9 @@ struct AddRepEntryView: View {
                         }
                     }
                     .disabled(!canSave)
+                    .buttonStyle(ThemedProminentButtonStyle(palette: palette))
+                    .padding(.top, 4)
+                    .padding(.bottom, 10)
                 }
             }
             .navigationTitle("Add Rep Entry")

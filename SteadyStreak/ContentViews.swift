@@ -118,7 +118,7 @@ struct ContentView: View {
                 .sheet(item: $showingGraphFor) { ex in ProgressGraphView(exercise: ex, palette: palette).themed(palette: palette, isDark: isDark) }
                 .sheet(isPresented: $showingUpgradeSheet) { UpgradeView() }
                 .sheet(isPresented: $showingAddEntry) {
-                    AddRepEntryView()
+                    AddRepEntryView(palette: palette)
                         .themed(palette: palette, isDark: isDark)
                 }
                 .alert("Upgrade required", isPresented: $showingUpgradeAlert) {
