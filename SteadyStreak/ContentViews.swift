@@ -26,6 +26,7 @@ struct ContentView: View {
     @State private var showingGraphFor: Exercise? = nil
     @State private var deletingExercise: Exercise? = nil
     @State private var dayAnchor = Calendar.current.startOfDay(for: Date()) // ⬅️ ADDED
+    @State private var showingAddEntry = false
 
 //    private var settings: AppSettings? { settingsArray.first }
 
@@ -104,8 +105,8 @@ struct ContentView: View {
 //                    ToolbarItem(placement: .topBarLeading) { Button { LocalReminderScheduler.rescheduleAll(using: context) } label: { Image(systemName: "bell.badge") } }
                     ToolbarItem(placement: .topBarTrailing) { Button { showingSaved = true } label: { Image(systemName: "bookmark") } }
                     ToolbarItem(placement: .topBarTrailing) { Button { showingSettings = true } label: { Image(systemName: "gearshape") } }
-//                    ToolbarItem(placement: .topBarTrailing) { Button { showingAdd = true } label: { Image(systemName: "plus") } }
                     ToolbarItem(placement: .topBarTrailing) { Button { handleAddExerciseTapped() } label: { Image(systemName: "plus") } }
+                    ToolbarItem(placement: .topBarTrailing) { Button { showingAddEntry = true } label: { Image(systemName: "square.and.pencil") } }
                 }
                 .sheet(isPresented: $showingAdd) { AddExerciseView(palette: palette).themed(palette: palette, isDark: isDark) }
                 .sheet(isPresented: $showingSettings) { SettingsView().themed(palette: ThemeKit.palette(settings), isDark: ThemeKit.isDark(settings)) }
@@ -116,10 +117,15 @@ struct ContentView: View {
                 .sheet(item: $showingMacroFor) { ex in MacroPlannerView(exercise: ex, palette: palette).themed(palette: palette, isDark: isDark) }
                 .sheet(item: $showingGraphFor) { ex in ProgressGraphView(exercise: ex, palette: palette).themed(palette: palette, isDark: isDark) }
                 .sheet(isPresented: $showingUpgradeSheet) { UpgradeView() }
+                .sheet(isPresented: $showingAddEntry) {
+                    AddRepEntryView()
+                        .themed(palette: palette, isDark: isDark)
+                }
                 .alert("Upgrade required", isPresented: $showingUpgradeAlert) {
                     Button("Not now", role: .cancel) {}
                     Button("Upgrade") { showingUpgradeSheet = true }
                 } message: { Text("Free plan allows up to 3 goals. Upgrade to unlock more and StreakPaths.") }
+
                 .alert("Delete Exercise?", isPresented: Binding(
                     get: { deletingExercise != nil },
                     set: { if !$0 { deletingExercise = nil } }

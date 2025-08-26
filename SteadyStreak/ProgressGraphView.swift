@@ -235,14 +235,17 @@ struct ProgressGraphView: View {
             // 1) Daily series for the Progress tab
             points = try DataService.dailySeries(for: exercise, context: context, daysBack: 60)
 
+//            print("🔍 Loaded daily series with \(points.count) points")
+
             // 2) MacroGoal for this exercise (avoid @Query capture issues)
             let exID = exercise.id // capture constant
 
-            print("🔍 Fetching MacroGoal for exercise ID: \(exID)")
+//            print("🔍 Fetching MacroGoal for exercise ID: \(exID)")
 
             let fd = FetchDescriptor<MacroGoal>( // adjust field names if needed
                 predicate: #Predicate { $0.exerciseID == exID }
             )
+
             if let m = try context.fetch(fd).first,
                let due = parseDate(m.completionDate)
             {
