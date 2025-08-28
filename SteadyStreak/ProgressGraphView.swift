@@ -63,8 +63,7 @@ struct ProgressGraphView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 } else {
                     GeometryReader { outerGeo in
-                        // Active series: raw daily totals OR cumulative totals for StreakPath
-//                        let series = (tab == .streakPath && macro != nil) ? cumulative(points) : points
+                        // Active series: keep daily totals (switch to cumulative(points) for StreakPath if desired)
                         let series = points
 
                         // Dynamic content width: wider with more points; never smaller than container
@@ -74,11 +73,10 @@ struct ProgressGraphView: View {
                         // Fixed X/Y domains (no rescale on selection)
                         let xDomain = (series.map { $0.day }.min() ?? Date())...(series.map { $0.day }.max() ?? Date())
 
-                        // Y domain: include target line in StreakPath
+                        // Y domain: include target line in StreakPath if present
                         let (minY, maxY): (Int, Int) = {
                             let localMin = series.map { $0.total }.min() ?? 0
                             var localMax = series.map { $0.total }.max() ?? 1
-//                            if let m = macro, tab == .streakPath {
                             if let m = macro, tab == .streakPath {
                                 localMax = max(localMax, m.targetTotal)
                             }
@@ -87,11 +85,14 @@ struct ProgressGraphView: View {
                         let pad = max(1, Int(Double(maxY - minY) * 0.1))
                         let yDomain = (minY - pad)...(maxY + pad)
 
-                        // Avoid repeated-looking x labels: pick stride from density + width
-                        let calendar = Calendar.current
-                        let uniqueDays = Array(Set(series.map { calendar.startOfDay(for: $0.day) })).sorted()
-                        let targetLabels = min(10, max(4, Int(outerGeo.size.width / 80)))
-                        let strideDays = max(1, uniqueDays.count / max(1, targetLabels))
+                        // NEW: only show oldest and newest dates on the x-axis
+                        let cal = Calendar.current
+                        let uniqueDays = Array(Set(series.map { cal.startOfDay(for: $0.day) })).sorted()
+                        let tickDates: [Date] = {
+                            guard let first = uniqueDays.first else { return [] }
+                            guard let last = uniqueDays.last else { return [first] }
+                            return first == last ? [first] : [first, last]
+                        }()
 
                         ScrollView(.horizontal, showsIndicators: true) {
                             Chart {
@@ -109,8 +110,7 @@ struct ProgressGraphView: View {
                                     )
                                 }
 
-                                // StreakPath overlays
-//                                if let m = macro, tab == .streakPath {
+                                // StreakPath overlays (kept visible if you want target/due lines on either tab)
                                 if let m = macro {
                                     RuleMark(y: .value("Target", m.targetTotal))
                                         .foregroundStyle(palette.onTint)
@@ -136,7 +136,7 @@ struct ProgressGraphView: View {
                             .chartXScale(domain: xDomain)
                             .chartYScale(domain: yDomain)
                             .chartXAxis {
-                                AxisMarks(values: .stride(by: .day, count: strideDays)) { value in
+                                AxisMarks(values: tickDates) { value in
                                     if let dateValue = value.as(Date.self) {
                                         AxisGridLine()
                                         AxisValueLabel {
@@ -184,7 +184,7 @@ struct ProgressGraphView: View {
                                                 .position(pt)
 
                                             // Date bubble clamped inside plot
-                                            let bubbleSize = CGSize(width: 140, height: 34)
+                                            let bubbleSize = CGSize(width: 160, height: 36)
                                             let placeRight = pt.x < plotFrame.midX
                                             let placeBelow = pt.y < plotFrame.midY
                                             let dx: CGFloat = placeRight ? 12 : -12
@@ -202,7 +202,7 @@ struct ProgressGraphView: View {
                                             let centerX = clampedOriginX + bubbleSize.width / 2
                                             let centerY = clampedOriginY + bubbleSize.height / 2
 
-                                            Text("\(sel.total) - \(sel.day.formatted(date: .numeric, time: .omitted))")
+                                            Text("\(sel.total) • \(sel.day.formatted(date: .abbreviated, time: .omitted))")
                                                 .font(.caption2).fontWeight(.semibold)
                                                 .padding(.horizontal, 10).padding(.vertical, 6)
                                                 .frame(width: bubbleSize.width, height: bubbleSize.height, alignment: .leading)
@@ -238,15 +238,10 @@ struct ProgressGraphView: View {
             // 1) Daily series for the Progress tab
             points = try DataService.dailySeries(for: exercise, context: context, daysBack: 60)
 
-//            print("🔍 Loaded daily series with \(points.count) points")
-
             // 2) MacroGoal for this exercise (avoid @Query capture issues)
             let exID = exercise.id // capture constant
-
-//            print("🔍 Fetching MacroGoal for exercise ID: \(exID)")
-
-            let fd = FetchDescriptor<MacroGoal>( // adjust field names if needed
-                predicate: #Predicate { $0.exerciseID == exID }
+            let fd = FetchDescriptor<MacroGoal>(
+                predicate: #Predicate { $0.exerciseID == exID } // adjust field name if needed
             )
 
             if let m = try context.fetch(fd).first,
@@ -267,7 +262,7 @@ struct ProgressGraphView: View {
 
     // MARK: - Helpers
 
-    /// Build a cumulative series (for StreakPath tab)
+    /// Build a cumulative series (for StreakPath tab) — keep if you later switch tabs to show cumulative.
     private func cumulative(_ pts: [DataService.DailyPoint]) -> [DataService.DailyPoint] {
         let sorted = pts.sorted { $0.day < $1.day }
         var running = 0
@@ -282,5 +277,18 @@ struct ProgressGraphView: View {
         return series.min { a, b in
             abs(a.day.timeIntervalSince(date)) < abs(b.day.timeIntervalSince(date))
         }
+    }
+
+    private func parseDate(_ s: String?) -> Date? {
+        guard let raw = s?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { return nil }
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withFullDate, .withInternetDateTime, .withDashSeparatorInDate, .withColonSeparatorInTime]
+        if let d = iso.date(from: raw) { return d }
+        let fmts = ["yyyy-MM-dd", "MM/dd/yyyy", "yyyy-MM-dd'T'HH:mm:ssXXXXX", "yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX"]
+        let df = DateFormatter()
+        df.locale = Locale(identifier: "en_US_POSIX")
+        df.timeZone = .current
+        for f in fmts { df.dateFormat = f; if let d = df.date(from: raw) { return d } }
+        return nil
     }
 }

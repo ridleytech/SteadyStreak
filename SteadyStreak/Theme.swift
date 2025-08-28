@@ -120,12 +120,13 @@ extension View {
 
 struct ThemedProminentButtonStyle: ButtonStyle {
     let palette: ThemePalette
+    let enabled: Bool
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.headline)
             .padding(.vertical, 10)
             .frame(maxWidth: .infinity)
-            .background(palette.onTint)
+            .background(enabled ? palette.onTint : Color.gray)
             .foregroundStyle(Color.white)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)

@@ -102,7 +102,7 @@ struct AddRepEntryView: View {
                         }
                     }
                     .disabled(!canSave)
-                    .buttonStyle(ThemedProminentButtonStyle(palette: palette))
+                    .buttonStyle(ThemedProminentButtonStyle(palette: palette, enabled: canSave))
                     .padding(.top, 4)
                     .padding(.bottom, 10)
                 }

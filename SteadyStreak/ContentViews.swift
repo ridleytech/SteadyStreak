@@ -39,6 +39,23 @@ struct ContentView: View {
     private var palette: ThemePalette { ThemeKit.palette(settings) }
     private var isDark: Bool { ThemeKit.isDark(settings) }
 
+    // MARK: - Grouping helpers ⬅️ ADDED (for “Today’s Streaks” vs “Other Streaks”)
+
+    /// Sunday = 1, Monday = 2, ... (matches your scheduledWeekdays indexing)
+    private var todayWeekdayIndex: Int {
+        Calendar.current.component(.weekday, from: dayAnchor)
+    }
+
+    /// Exercises scheduled for *today*
+    private var todaysExercises: [Exercise] {
+        exercises.filter { $0.scheduledWeekdays.contains(todayWeekdayIndex) }
+    }
+
+    /// All other exercises (not scheduled for *today*)
+    private var otherExercises: [Exercise] {
+        exercises.filter { !$0.scheduledWeekdays.contains(todayWeekdayIndex) }
+    }
+
     private func performDelete(_ ex: Exercise) {
         withAnimation {
             context.delete(ex)
@@ -47,42 +64,97 @@ struct ContentView: View {
         }
     }
 
+    // Extracted row so we can reuse it in both sections (keeps your Add Entry updates)
+    private func row(for ex: Exercise) -> some View {
+        ExerciseRow(exercise: ex, palette: palette)
+            .contentShape(Rectangle())
+            .onTapGesture { showingLogFor = ex }
+            .contextMenu {
+                Button("Change Daily Goal") { editingGoal = ex }
+                Button("Log Today's Reps") { showingLogFor = ex }
+                Button("Add Entry") { showingAddEntryFor = ex }
+                Button("Edit Schedule") { editingExercise = ex }
+                Button("Create StreakPath") { showingMacroFor = ex }
+                Button("View Progress Graph") { showingGraphFor = ex }
+            }
+            .swipeActions(edge: .trailing) { Button("Log") { showingLogFor = ex }.tint(palette.onTint) }
+            .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                Button("Edit") { editingExercise = ex }.tint(.blue)
+
+                Button(role: .destructive) {
+                    deletingExercise = ex
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+            .listRowBackground(Color.clear)
+    }
+
     @ViewBuilder
     private var mainContent: some View {
         if exercises.isEmpty {
-            ContentUnavailableView("No Exercises", systemImage: "figure.strengthtraining.traditional", description: Text("Add an exercise with a daily rep goal to get started."))
+            ContentUnavailableView(
+                "No Exercises",
+                systemImage: "figure.strengthtraining.traditional",
+                description: Text("Add an exercise with a daily rep goal to get started.")
+            )
         } else {
             List {
-                ForEach(exercises) { ex in
-                    ExerciseRow(exercise: ex, palette: palette)
-                        .contentShape(Rectangle())
-                        .onTapGesture { showingLogFor = ex }
-                        .contextMenu {
-                            Button("Change Daily Goal") { editingGoal = ex }
-                            Button("Log Today's Reps") { showingLogFor = ex }
-                            Button("Add Entry") { showingAddEntryFor = ex }
-                            Button("Edit Schedule") { editingExercise = ex }
-                            Button("Create StreakPath") { showingMacroFor = ex }
-                            Button("View Progress Graph") { showingGraphFor = ex }
+                // Top group: today's scheduled streaks
+                if !todaysExercises.isEmpty {
+                    Section {
+                        ForEach(todaysExercises) { ex in
+                            row(for: ex)
                         }
-                        .swipeActions(edge: .trailing) { Button("Log") { showingLogFor = ex }.tint(palette.onTint) }
-                        .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                            Button("Edit") { editingExercise = ex }.tint(.blue)
-
-                            Button(role: .destructive) {
-                                deletingExercise = ex
-                            } label: {
-                                Label("Delete", systemImage: "trash")
+                        .onDelete { indexSet in
+                            // Map IndexSet (section-local) to concrete models
+                            let toDelete = indexSet.map { todaysExercises[$0] }
+                            withAnimation {
+                                for ex in toDelete { context.delete(ex) }
+                                LocalReminderScheduler.rescheduleAll(using: context)
                             }
                         }
+                    }
+                    header: {
+                        Text("Today's Streaks")
+                            .font(.subheadline.weight(.semibold))
+                            .textCase(.none) // prevent automatic ALL CAPS
+                            .foregroundStyle(palette.onTint) // or palette.onTint
+                    }
+//                    .foregroundStyle(palette.text) // Make section header more prominent
+                }
 
-                        .listRowBackground(Color.clear)
+                // Remaining streaks
+                if !otherExercises.isEmpty {
+                    if !todaysExercises.isEmpty {
+                        Section("Other Streaks") {
+                            ForEach(otherExercises) { ex in
+                                row(for: ex)
+                            }
+                            .onDelete { indexSet in
+                                let toDelete = indexSet.map { otherExercises[$0] }
+                                withAnimation {
+                                    for ex in toDelete { context.delete(ex) }
+                                    LocalReminderScheduler.rescheduleAll(using: context)
+                                }
+                            }
+                        }
+                    } else {
+                        // If there are no “Today” items, just show a flat list
+                        ForEach(otherExercises) { ex in
+                            row(for: ex)
+                        }
+                        .onDelete { indexSet in
+                            let toDelete = indexSet.map { otherExercises[$0] }
+                            withAnimation {
+                                for ex in toDelete { context.delete(ex) }
+                                LocalReminderScheduler.rescheduleAll(using: context)
+                            }
+                        }
+                    }
                 }
-                .onDelete { indexSet in
-                    for i in indexSet { context.delete(exercises[i]) }
-                    LocalReminderScheduler.rescheduleAll(using: context)
-                }
-            }.listStyle(.plain)
+            }
+            .listStyle(.plain)
         }
     }
 
@@ -100,7 +172,7 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             mainContent
-                .id(dayAnchor) // ⬅️ ADDED: Rebuild view tree when day flips
+                .id(dayAnchor) // ⬅️ ADDED: Rebuild view tree when day flips (updates grouping)
                 .navigationTitle("SteadyStreak")
                 .toolbar {
 //                    ToolbarItem(placement: .topBarLeading) { Button { LocalReminderScheduler.rescheduleAll(using: context) } label: { Image(systemName: "bell.badge") } }

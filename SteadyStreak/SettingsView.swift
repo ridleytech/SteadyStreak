@@ -77,7 +77,7 @@ struct SettingsView: View {
             } label: {
                 HStack { Spacer(); Text("Apply & Reschedule Reminders"); Spacer() }
             }
-            .buttonStyle(ThemedProminentButtonStyle(palette: palette))
+            .buttonStyle(ThemedProminentButtonStyle(palette: palette, enabled: true))
         } header: { AppStyle.header("Apply & Reschedule Reminders") }
     }
 

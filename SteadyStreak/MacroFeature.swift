@@ -220,12 +220,14 @@ struct MacroPlannerView: View {
                         .padding(.bottom, 6)
 
                     VStack(alignment: .leading, spacing: 10) {
-                        Stepper(value: $targetTotal, in: 1 ... 100000, step: 5) {
+                        Stepper(value: $targetTotal, in: 1 ... 100000, step: 1) {
                             HStack { Text("🎯 Target reps goal"); Spacer(); Text("\(targetTotal)").foregroundStyle(.secondary).monospacedDigit() }
                         }
                         HStack(spacing: 10) {
                             Button("+5") { targetTotal = min(100000, targetTotal + 5) }.buttonStyle(BorderedButtonStyle())
                             Button("+10") { targetTotal = min(100000, targetTotal + 10) }.buttonStyle(BorderedButtonStyle())
+                            Button("-5") { targetTotal = min(10000, targetTotal - 5 > 0 ? targetTotal - 5 : 1) }.buttonStyle(BorderedButtonStyle())
+                            Button("-10") { targetTotal = min(10000, targetTotal - 10 - 10 > 0 ? targetTotal - 10 : 1) }.buttonStyle(BorderedButtonStyle())
                         }
                     }
                     .padding(.vertical, 6)
@@ -239,7 +241,7 @@ struct MacroPlannerView: View {
                                 Text(isLoading ? "Creating StreakPath..." : "Create StreakPath")
                             }
                         }
-                        .buttonStyle(ThemedProminentButtonStyle(palette: palette))
+                        .buttonStyle(ThemedProminentButtonStyle(palette: palette, enabled: !isLoading))
                         .padding(.top, 8)
                         .padding(.bottom, 14)
                         .disabled(isLoading)
@@ -286,7 +288,7 @@ struct MacroPlannerView: View {
                         Button { savePlan(p) } label: {
                             Label(didSave ? "Saved" : "Save Plan", systemImage: didSave ? "checkmark.seal.fill" : "square.and.arrow.down")
                         }
-                        .buttonStyle(ThemedProminentButtonStyle(palette: palette))
+                        .buttonStyle(ThemedProminentButtonStyle(palette: palette, enabled: true))
                         .disabled(didSave)
                         .padding(.top, 4)
                         .padding(.bottom, 10)
