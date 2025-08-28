@@ -10,7 +10,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(\.modelContext) private var context
-    @Environment(\.scenePhase) private var scenePhase // ⬅️ already added earlier
+    @Environment(\.scenePhase) private var scenePhase // ⬅️ ADDED
     @Query(sort: [SortDescriptor(\Exercise.createdAt, order: .forward)]) private var exercises: [Exercise]
     @Query private var settingsArray: [AppSettings]
 
@@ -25,7 +25,9 @@ struct ContentView: View {
     @State private var showingSaved = false
     @State private var showingGraphFor: Exercise? = nil
     @State private var deletingExercise: Exercise? = nil
-    @State private var dayAnchor = Calendar.current.startOfDay(for: Date()) // ⬅️ keeps list current when day flips
+    @State private var dayAnchor = Calendar.current.startOfDay(for: Date()) // ⬅️ ADDED
+    @State private var showingAddEntry = false
+    @State private var showingAddEntryFor: Exercise? = nil
 
 //    private var settings: AppSettings? { settingsArray.first }
 
@@ -37,23 +39,6 @@ struct ContentView: View {
     private var palette: ThemePalette { ThemeKit.palette(settings) }
     private var isDark: Bool { ThemeKit.isDark(settings) }
 
-    // MARK: - Grouping helpers
-
-    /// Sunday = 1, Monday = 2, ... (matches your scheduledWeekdays indices)
-    private var todayWeekdayIndex: Int {
-        Calendar.current.component(.weekday, from: dayAnchor)
-    }
-
-    /// Exercises scheduled for *today*
-    private var todaysExercises: [Exercise] {
-        exercises.filter { $0.scheduledWeekdays.contains(todayWeekdayIndex) }
-    }
-
-    /// All other exercises (not scheduled for *today*)
-    private var otherExercises: [Exercise] {
-        exercises.filter { !$0.scheduledWeekdays.contains(todayWeekdayIndex) }
-    }
-
     private func performDelete(_ ex: Exercise) {
         withAnimation {
             context.delete(ex)
@@ -62,92 +47,42 @@ struct ContentView: View {
         }
     }
 
-    // Extracted row so we can reuse in both sections
-    private func row(for ex: Exercise) -> some View {
-        ExerciseRow(exercise: ex, palette: palette)
-            .contentShape(Rectangle())
-            .onTapGesture { showingLogFor = ex }
-            .contextMenu {
-                Button("Change Daily Goal") { editingGoal = ex }
-                Button("Log Today's Reps") { showingLogFor = ex }
-                Button("Edit Schedule") { editingExercise = ex }
-                Button("Create StreakPath") { showingMacroFor = ex }
-                Button("View Progress Graph") { showingGraphFor = ex }
-            }
-            .swipeActions(edge: .trailing) {
-                Button("Log") { showingLogFor = ex }.tint(palette.onTint)
-            }
-//                        .swipeActions(edge: .leading) { Button("Edit") { editingExercise = ex }.tint(.blue) }
-            .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                Button("Edit") { editingExercise = ex }.tint(.blue)
-
-                Button(role: .destructive) {
-                    deletingExercise = ex
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                }
-            }
-            .listRowBackground(Color.clear)
-    }
-
     @ViewBuilder
     private var mainContent: some View {
         if exercises.isEmpty {
-            ContentUnavailableView(
-                "No Exercises",
-                systemImage: "figure.strengthtraining.traditional",
-                description: Text("Add an exercise with a daily rep goal to get started.")
-            )
+            ContentUnavailableView("No Exercises", systemImage: "figure.strengthtraining.traditional", description: Text("Add an exercise with a daily rep goal to get started."))
         } else {
             List {
-                // "Today's Goals" section (only if there are any scheduled today)
-                if !todaysExercises.isEmpty {
-                    Section("Today's Streaks") {
-                        ForEach(todaysExercises) { ex in
-                            row(for: ex)
+                ForEach(exercises) { ex in
+                    ExerciseRow(exercise: ex, palette: palette)
+                        .contentShape(Rectangle())
+                        .onTapGesture { showingLogFor = ex }
+                        .contextMenu {
+                            Button("Change Daily Goal") { editingGoal = ex }
+                            Button("Log Today's Reps") { showingLogFor = ex }
+                            Button("Add Entry") { showingAddEntryFor = ex }
+                            Button("Edit Schedule") { editingExercise = ex }
+                            Button("Create StreakPath") { showingMacroFor = ex }
+                            Button("View Progress Graph") { showingGraphFor = ex }
                         }
-                        .onDelete { indexSet in
-                            // Delete from today's bucket
-                            let toDelete = indexSet.map { todaysExercises[$0] }
-                            withAnimation {
-                                for ex in toDelete { context.delete(ex) }
-                                LocalReminderScheduler.rescheduleAll(using: context)
-                            }
-                        }
-                    }
-                }
+                        .swipeActions(edge: .trailing) { Button("Log") { showingLogFor = ex }.tint(palette.onTint) }
+                        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                            Button("Edit") { editingExercise = ex }.tint(.blue)
 
-                // "Other Streaks" section OR plain list for remaining items
-                if !otherExercises.isEmpty {
-                    if !todaysExercises.isEmpty {
-                        Section("Other Streaks") {
-                            ForEach(otherExercises) { ex in
-                                row(for: ex)
-                            }
-                            .onDelete { indexSet in
-                                let toDelete = indexSet.map { otherExercises[$0] }
-                                withAnimation {
-                                    for ex in toDelete { context.delete(ex) }
-                                    LocalReminderScheduler.rescheduleAll(using: context)
-                                }
+                            Button(role: .destructive) {
+                                deletingExercise = ex
+                            } label: {
+                                Label("Delete", systemImage: "trash")
                             }
                         }
-                    } else {
-                        // No "Today" section — just render the remaining as a flat list
-                        ForEach(otherExercises) { ex in
-                            row(for: ex)
-                        }
-                        .onDelete { indexSet in
-                            let toDelete = indexSet.map { otherExercises[$0] }
-                            withAnimation {
-                                for ex in toDelete { context.delete(ex) }
-                                LocalReminderScheduler.rescheduleAll(using: context)
-                            }
-                        }
-                    }
+
+                        .listRowBackground(Color.clear)
                 }
-            }
-            .listStyle(.plain)
+                .onDelete { indexSet in
+                    for i in indexSet { context.delete(exercises[i]) }
+                    LocalReminderScheduler.rescheduleAll(using: context)
+                }
+            }.listStyle(.plain)
         }
     }
 
@@ -165,14 +100,14 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             mainContent
-                .id(dayAnchor) // ⬅️ Rebuild when the calendar day flips
+                .id(dayAnchor) // ⬅️ ADDED: Rebuild view tree when day flips
                 .navigationTitle("SteadyStreak")
                 .toolbar {
 //                    ToolbarItem(placement: .topBarLeading) { Button { LocalReminderScheduler.rescheduleAll(using: context) } label: { Image(systemName: "bell.badge") } }
                     ToolbarItem(placement: .topBarTrailing) { Button { showingSaved = true } label: { Image(systemName: "bookmark") } }
                     ToolbarItem(placement: .topBarTrailing) { Button { showingSettings = true } label: { Image(systemName: "gearshape") } }
-//                    ToolbarItem(placement: .topBarTrailing) { Button { showingAdd = true } label: { Image(systemName: "plus") } }
                     ToolbarItem(placement: .topBarTrailing) { Button { handleAddExerciseTapped() } label: { Image(systemName: "plus") } }
+                    ToolbarItem(placement: .topBarTrailing) { Button { showingAddEntry = true } label: { Image(systemName: "square.and.pencil") } }
                 }
                 .sheet(isPresented: $showingAdd) { AddExerciseView(palette: palette).themed(palette: palette, isDark: isDark) }
                 .sheet(isPresented: $showingSettings) { SettingsView().themed(palette: ThemeKit.palette(settings), isDark: ThemeKit.isDark(settings)) }
@@ -183,10 +118,18 @@ struct ContentView: View {
                 .sheet(item: $showingMacroFor) { ex in MacroPlannerView(exercise: ex, palette: palette).themed(palette: palette, isDark: isDark) }
                 .sheet(item: $showingGraphFor) { ex in ProgressGraphView(exercise: ex, palette: palette).themed(palette: palette, isDark: isDark) }
                 .sheet(isPresented: $showingUpgradeSheet) { UpgradeView() }
+                .sheet(isPresented: $showingAddEntry) {
+                    AddRepEntryView(palette: palette)
+                        .themed(palette: palette, isDark: isDark)
+                }
+                .sheet(item: $showingAddEntryFor) { ex in
+                    AddRepEntryView(palette: palette, selectedExerciseID: ex.id).themed(palette: palette, isDark: isDark)
+                }
                 .alert("Upgrade required", isPresented: $showingUpgradeAlert) {
                     Button("Not now", role: .cancel) {}
                     Button("Upgrade") { showingUpgradeSheet = true }
                 } message: { Text("Free plan allows up to 3 goals. Upgrade to unlock more and StreakPaths.") }
+
                 .alert("Delete Exercise?", isPresented: Binding(
                     get: { deletingExercise != nil },
                     set: { if !$0 { deletingExercise = nil } }
@@ -207,13 +150,14 @@ struct ContentView: View {
         .onChange(of: exercises.count) {
             _ in LocalReminderScheduler.rescheduleAll(using: context)
 
-            print("Exercises count changed to \(exercises.count); rescheduled reminders")
+//            print("Exercises count changed to \(exercises.count); rescheduled reminders")
         }
         .onAppear {
 //            settings.hasFullUnlock = true
         }
-        .onChange(of: scenePhase) { phase in // ⬅️ Foreground check: flip dayAnchor if a new day
+        .onChange(of: scenePhase) { phase in // ⬅️ ADDED: Foreground check
             if phase == .active {
+//                print("App became active; checking date")
                 let today = Calendar.current.startOfDay(for: Date())
                 if today != dayAnchor {
                     dayAnchor = today
@@ -221,7 +165,7 @@ struct ContentView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
-            // ⬅️ Midnight rollover while app is open
+            // ⬅️ ADDED: Handle midnight rollover while app is open
             dayAnchor = Calendar.current.startOfDay(for: Date())
         }
     }
