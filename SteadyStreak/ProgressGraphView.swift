@@ -64,7 +64,8 @@ struct ProgressGraphView: View {
                 } else {
                     GeometryReader { outerGeo in
                         // Active series: raw daily totals OR cumulative totals for StreakPath
-                        let series = (tab == .streakPath && macro != nil) ? cumulative(points) : points
+//                        let series = (tab == .streakPath && macro != nil) ? cumulative(points) : points
+                        let series = points
 
                         // Dynamic content width: wider with more points; never smaller than container
                         let perPoint: CGFloat = 18
@@ -77,6 +78,7 @@ struct ProgressGraphView: View {
                         let (minY, maxY): (Int, Int) = {
                             let localMin = series.map { $0.total }.min() ?? 0
                             var localMax = series.map { $0.total }.max() ?? 1
+//                            if let m = macro, tab == .streakPath {
                             if let m = macro, tab == .streakPath {
                                 localMax = max(localMax, m.targetTotal)
                             }
@@ -108,7 +110,8 @@ struct ProgressGraphView: View {
                                 }
 
                                 // StreakPath overlays
-                                if let m = macro, tab == .streakPath {
+//                                if let m = macro, tab == .streakPath {
+                                if let m = macro {
                                     RuleMark(y: .value("Target", m.targetTotal))
                                         .foregroundStyle(palette.onTint)
                                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
@@ -117,11 +120,6 @@ struct ProgressGraphView: View {
                                                 .font(.caption2)
                                                 .padding(.horizontal, 6).padding(.vertical, 4)
                                                 .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 6))
-
-//                                            Text("🎯")
-//                                                .font(.caption2)
-//                                                .padding(.horizontal, 6).padding(.vertical, 4)
-//                                                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 6))
                                         }
 
                                     RuleMark(x: .value("Due", m.completionDate))

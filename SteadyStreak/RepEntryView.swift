@@ -18,10 +18,18 @@ struct AddRepEntryView: View {
     @Query(sort: [SortDescriptor(\Exercise.createdAt, order: .forward)])
     private var exercises: [Exercise]
 
+//    let selectedExerciseID: UUID?
+    @State var selectedExerciseID: UUID?
+
     // UI state
-    @State private var selectedExerciseID: UUID?
+//    @State private var selectedExerciseID: UUID?
     @State private var entryDate: Date = .init()
     @State private var repsText: String = ""
+    @State private var showingEntryAlert = false
+
+    @State private var repTotal: Int = 0
+    @State private var exerciseName: String = ""
+    @State private var lastRepsValue: Int = 0
 
     // Simple validation
     private var selectedExercise: Exercise? {
@@ -35,6 +43,15 @@ struct AddRepEntryView: View {
 
     private var canSave: Bool {
         selectedExercise != nil && (repsValue ?? 0) > 0
+    }
+
+    func formatDate(date: Date) -> String {
+        let today = date
+        let formatter1 = DateFormatter()
+        formatter1.dateStyle = .short
+        print(formatter1.string(from: today))
+
+        return formatter1.string(from: today)
     }
 
     var body: some View {
@@ -73,7 +90,11 @@ struct AddRepEntryView: View {
 
                 Section {
                     Button {
-                        save()
+                        if let selectedExercise {
+                            exerciseName = selectedExercise.name
+                            save()
+                        }
+
                     } label: {
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
@@ -92,6 +113,11 @@ struct AddRepEntryView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
                 }
+            }
+            .alert("\(exerciseName) entry saved", isPresented: $showingEntryAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("\(lastRepsValue) reps saved for date \(formatDate(date: entryDate)).")
             }
             .onAppear {
                 // Preselect first exercise if none chosen
@@ -139,7 +165,10 @@ struct AddRepEntryView: View {
             try context.save()
             // Let rows/graphs know this exercise’s entries changed
             NotificationCenter.default.post(name: .repEntryUpdated, object: ex.id)
-            dismiss()
+            lastRepsValue = reps
+            repsText = ""
+            showingEntryAlert = true
+//            dismiss()
         } catch {
             // You can present an alert if you like
             print("❌ Failed to save rep entry: \(error)")
