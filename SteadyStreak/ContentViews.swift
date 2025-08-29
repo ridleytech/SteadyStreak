@@ -121,7 +121,6 @@ struct ContentView: View {
                             .textCase(.none) // prevent automatic ALL CAPS
                             .foregroundStyle(palette.onTint) // or palette.onTint
                     }
-//                    .foregroundStyle(palette.text) // Make section header more prominent
                 }
 
                 // Remaining streaks
