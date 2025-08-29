@@ -55,17 +55,19 @@ struct ContentView: View {
         exercises.filter { !$0.isArchived && !$0.scheduledWeekdays.contains(todayWeekdayIndex) }
     }
 
-    private func performDelete(_ ex: Exercise) {
+    private func archive(_ ex: Exercise) {
         withAnimation {
-            context.delete(ex)
-            LocalReminderScheduler.rescheduleAll(using: context)
+            ex.isArchived = true
+            LocalReminderScheduler.cancelAll(for: ex) // ⬅️ stop existing reminders now
+            LocalReminderScheduler.rescheduleAll(using: context) // ⬅️ rebuild for active only
             try? context.save()
         }
     }
 
-    private func archive(_ ex: Exercise) {
+    private func performDelete(_ ex: Exercise) {
         withAnimation {
-            ex.isArchived = true
+            LocalReminderScheduler.cancelAll(for: ex) // ⬅️ stop reminders for this exercise
+            context.delete(ex)
             LocalReminderScheduler.rescheduleAll(using: context)
             try? context.save()
         }

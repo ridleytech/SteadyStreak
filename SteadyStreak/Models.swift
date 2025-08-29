@@ -52,6 +52,9 @@ enum ThemeStyle: Int, Codable, CaseIterable, Identifiable {
     var hasFullUnlock: Bool = false
     var createdAt: Date
     var themeRaw: Int
+    var userUUID: String?
+    var lastCloudSync: Date?
+
     init(id: UUID = UUID(), modeRaw: Int = 0, startHour: Int = 7, intervalHours: Int = 3, customHours: [Int] = [7, 10, 13, 16, 19, 22], createdAt: Date = Date(), themeRaw: Int = 0) {
         self.id = id; self.modeRaw = modeRaw; self.startHour = startHour; self.intervalHours = intervalHours; self.customHours = customHours; self.createdAt = createdAt; self.themeRaw = themeRaw
     }

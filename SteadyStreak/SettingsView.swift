@@ -13,6 +13,9 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Query private var settingsArray: [AppSettings]
     @State private var showingArchived = false
+    @State private var showingAccount = false
+    @State private var isSyncing = false
+    @State private var syncMessage: String? = nil
 
     private var settings: AppSettings {
         if let s = settingsArray.first { return s }
@@ -127,6 +130,34 @@ struct SettingsView: View {
 //        }
     }
 
+    @ViewBuilder private var accountSection: some View {
+        Section(header: Text("Cloud")) {
+            Button {
+                if (settings.userUUID ?? "").isEmpty {
+                    showingAccount = true
+                } else {
+                    print("start sync")
+//                    Task { await syncNow() }
+                }
+            } label: {
+                Label("Sync to Cloud", systemImage: "icloud.and.arrow.up")
+            }
+            .disabled(isSyncing || (settings.userUUID ?? "").isEmpty)
+
+            Button {
+                showingAccount = true
+            } label: {
+                Label(settings.userUUID == nil ? "Create Account" : "Manage Account", systemImage: "person.badge.key")
+            }
+
+            if let last = settings.lastCloudSync {
+                Text("Last sync: \(last.formatted(date: .abbreviated, time: .shortened))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -135,6 +166,7 @@ struct SettingsView: View {
                 applySection
                 themeSection
                 archivedSection
+//                accountSection
             }
             .themed(palette: palette, isDark: isDark)
             .navigationTitle("Settings")
@@ -142,6 +174,10 @@ struct SettingsView: View {
             .sheet(isPresented: $showingArchived) {
                 ArchivedExercisesView()
                     // If you theme Settings children, apply your theming helper:
+                    .themed(palette: ThemeKit.palette(settings), isDark: ThemeKit.isDark(settings))
+            }
+            .sheet(isPresented: $showingAccount) {
+                CreateAccountView()
                     .themed(palette: ThemeKit.palette(settings), isDark: ThemeKit.isDark(settings))
             }
         }
@@ -157,6 +193,31 @@ struct SettingsView: View {
         let date = Calendar.current.date(from: DateComponents(hour: h)) ?? Date()
         let fmt = DateFormatter(); fmt.dateFormat = "h a"; fmt.locale = .current
         return fmt.string(from: date)
+    }
+
+    @MainActor
+    private func syncNow() async {
+        guard let uid = settings.userUUID, !uid.isEmpty else {
+            showingAccount = true
+            return
+        }
+
+        isSyncing = true
+        defer { isSyncing = false }
+
+        do {
+            let payload = try CloudSyncService.makeExportPayload(context: context, userUUID: uid)
+
+            // 🔧 Replace with your real API endpoint:
+            let endpoint = "https://your-backend.example.com/api/sync"
+
+            try await CloudSyncService.postExport(payload, to: endpoint)
+            settings.lastCloudSync = Date()
+            try? context.save()
+            syncMessage = "Sync complete."
+        } catch {
+            syncMessage = error.localizedDescription
+        }
     }
 }
 
