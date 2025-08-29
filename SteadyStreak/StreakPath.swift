@@ -216,6 +216,12 @@ struct MacroPlannerView: View {
                     HStack { Text("Name"); Spacer(); Text(exercise.name).foregroundStyle(.secondary) }
                         .padding(.vertical, 2)
 
+                    HStack {
+                        StreakPathTipCard(palette: palette)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                            .listRowBackground(Color.clear)
+                    }
+
                     HStack { Text("Daily goal reps"); Spacer(); Text("\(exercise.dailyGoal)").foregroundStyle(.secondary).monospacedDigit() }
                         .padding(.bottom, 6)
 
