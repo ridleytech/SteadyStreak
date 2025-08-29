@@ -48,17 +48,24 @@ struct ContentView: View {
 
     /// Exercises scheduled for *today*
     private var todaysExercises: [Exercise] {
-        exercises.filter { $0.scheduledWeekdays.contains(todayWeekdayIndex) }
+        exercises.filter { !$0.isArchived && $0.scheduledWeekdays.contains(todayWeekdayIndex) }
     }
 
-    /// All other exercises (not scheduled for *today*)
     private var otherExercises: [Exercise] {
-        exercises.filter { !$0.scheduledWeekdays.contains(todayWeekdayIndex) }
+        exercises.filter { !$0.isArchived && !$0.scheduledWeekdays.contains(todayWeekdayIndex) }
     }
 
     private func performDelete(_ ex: Exercise) {
         withAnimation {
             context.delete(ex)
+            LocalReminderScheduler.rescheduleAll(using: context)
+            try? context.save()
+        }
+    }
+
+    private func archive(_ ex: Exercise) {
+        withAnimation {
+            ex.isArchived = true
             LocalReminderScheduler.rescheduleAll(using: context)
             try? context.save()
         }
@@ -76,6 +83,11 @@ struct ContentView: View {
                 Button("Edit Schedule") { editingExercise = ex }
                 Button("Create StreakPath") { showingMacroFor = ex }
                 Button("View Progress Graph") { showingGraphFor = ex }
+                Divider()
+
+                Button("Archive") {
+                    archive(ex)
+                }
             }
             .swipeActions(edge: .trailing) { Button("Log") { showingLogFor = ex }.tint(palette.onTint) }
             .swipeActions(edge: .leading, allowsFullSwipe: false) {
@@ -175,10 +187,14 @@ struct ContentView: View {
                 .navigationTitle("SteadyStreak")
                 .toolbar {
 //                    ToolbarItem(placement: .topBarLeading) { Button { LocalReminderScheduler.rescheduleAll(using: context) } label: { Image(systemName: "bell.badge") } }
+                    ToolbarItem(placement: .topBarTrailing) { Button { handleAddExerciseTapped() } label: { Image(systemName: "plus") } }
+
+                    if !exercises.isEmpty {
+                        ToolbarItem(placement: .topBarTrailing) { Button { showingAddEntry = true } label: { Image(systemName: "square.and.pencil") } }
+                    }
+
                     ToolbarItem(placement: .topBarTrailing) { Button { showingSaved = true } label: { Image(systemName: "bookmark") } }
                     ToolbarItem(placement: .topBarTrailing) { Button { showingSettings = true } label: { Image(systemName: "gearshape") } }
-                    ToolbarItem(placement: .topBarTrailing) { Button { handleAddExerciseTapped() } label: { Image(systemName: "plus") } }
-                    ToolbarItem(placement: .topBarTrailing) { Button { showingAddEntry = true } label: { Image(systemName: "square.and.pencil") } }
                 }
                 .sheet(isPresented: $showingAdd) { AddExerciseView(palette: palette).themed(palette: palette, isDark: isDark) }
                 .sheet(isPresented: $showingSettings) { SettingsView().themed(palette: ThemeKit.palette(settings), isDark: ThemeKit.isDark(settings)) }

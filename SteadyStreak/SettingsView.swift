@@ -12,6 +12,7 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Query private var settingsArray: [AppSettings]
+    @State private var showingArchived = false
 
     private var settings: AppSettings {
         if let s = settingsArray.first { return s }
@@ -111,6 +112,21 @@ struct SettingsView: View {
         } header: { AppStyle.header("Theme") }
     }
 
+    @ViewBuilder private var archivedSection: some View {
+        Section {
+            Button {
+                showingArchived = true
+            } label: {
+                Label("Archived Streaks", systemImage: "archivebox")
+                    .font(.body.weight(.semibold))
+            }
+        }
+//        .footer {
+//            // keeps the button visually anchored at the bottom
+//            EmptyView()
+//        }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -118,10 +134,16 @@ struct SettingsView: View {
                 if settings.mode == .interval { intervalSection } else { customTimesSection }
                 applySection
                 themeSection
+                archivedSection
             }
             .themed(palette: palette, isDark: isDark)
             .navigationTitle("Settings")
             .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Close") { dismiss() } } }
+            .sheet(isPresented: $showingArchived) {
+                ArchivedExercisesView()
+                    // If you theme Settings children, apply your theming helper:
+                    .themed(palette: ThemeKit.palette(settings), isDark: ThemeKit.isDark(settings))
+            }
         }
     }
 

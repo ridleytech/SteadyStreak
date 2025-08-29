@@ -19,6 +19,8 @@ enum ThemeStyle: Int, Codable, CaseIterable, Identifiable {
     var dailyGoal: Int
     var createdAt: Date
     var scheduledWeekdays: [Int]
+    var isArchived: Bool = false
+
     @Relationship(deleteRule: .cascade, inverse: \RepEntry.exercise)
     var entries: [RepEntry] = []
     init(name: String, dailyGoal: Int, scheduledWeekdays: [Int] = Array(1 ... 7), id: UUID = UUID(), createdAt: Date = Date()) {
